@@ -35,18 +35,15 @@ const Shipping = () => {
     dispatch(saveShippingInfo(shippingInfo));
 
     try {
-      // Create a payment intent
       const { data } = await axios.post(
         `${server}/api/v1/payment/create`,
         {
           amount: total,
-          currency: "inr",
-          description: "Purchase from Your Store", // Add a description for the payment intent
         },
         {
           headers: {
             "Content-Type": "application/json",
-          }
+          },
         }
       );
 

@@ -6,11 +6,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { saveShippingInfo } from "../redux/reducer/cartReducer";
 import { RootState, server } from "../redux/store";
-import { auth } from "../firebase"; // Import Firebase auth
-import { onAuthStateChanged } from "firebase/auth";
 
 const Shipping = () => {
-  const { cartItems, total } = useSelector((state: RootState) => state.cartReducer);
+  const { cartItems, total } = useSelector(
+    (state: RootState) => state.cartReducer
+  );
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -22,48 +23,29 @@ const Shipping = () => {
     pinCode: "",
   });
 
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-
-    if (cartItems.length <= 0) {
-      navigate("/cart");
-    }
-
-    return () => unsubscribe();
-  }, [cartItems, navigate]);
-
-  const changeHandler = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const changeHandler = (
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setShippingInfo((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const submitHandler = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!user) {
-      toast.error("You must be logged in to proceed");
-      return;
-    }
-
     dispatch(saveShippingInfo(shippingInfo));
 
     try {
-      const idToken = await user.getIdToken();
-
+      // Create a payment intent
       const { data } = await axios.post(
         `${server}/api/v1/payment/create`,
         {
           amount: total,
           currency: "inr",
-          description: "Purchase from Your Store",
+          description: "Purchase from Your Store", // Add a description for the payment intent
         },
         {
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${idToken}`,
           }
         }
       );
@@ -76,6 +58,10 @@ const Shipping = () => {
       toast.error("Something went wrong");
     }
   };
+
+  useEffect(() => {
+    if (cartItems.length <= 0) return navigate("/cart");
+  }, [cartItems]);
 
   return (
     <div className="shipping">
